@@ -110,6 +110,93 @@
     })(start);
   }
 
+  /* ------------------------------------------------------------- sigils
+     Where no photograph exists, a rosette is drawn from the man's name.
+     The same name always yields the same figure, so his mark is his own. */
+
+  function seeded(text) {
+    var h = 2166136261;
+    for (var i = 0; i < text.length; i++) {
+      h ^= text.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return function () {
+      h ^= h << 13; h ^= h >>> 17; h ^= h << 5;
+      return ((h >>> 0) % 100000) / 100000;
+    };
+  }
+
+  function sigil(canvas) {
+    var rand = seeded(canvas.getAttribute("data-sigil") || "");
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var box = canvas.getBoundingClientRect();
+    var s = Math.max(box.width, 40);
+
+    canvas.width = s * dpr;
+    canvas.height = s * dpr;
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var mid = s / 2;
+    var r = s * 0.44;
+    var petals = 6 + Math.floor(rand() * 7);
+    var sides = 3 + Math.floor(rand() * 6);
+    var turn = rand() * Math.PI * 2;
+    var ratio = 0.44 + rand() * 0.16;
+
+    ctx.translate(mid, mid);
+    ctx.rotate(turn);
+    ctx.lineWidth = Math.max(0.6, s / 150);
+
+    /* Petal rosette, as in an illuminated capital. */
+    ctx.strokeStyle = "rgba(201,164,76,.5)";
+    for (var i = 0; i < petals; i++) {
+      var a = (i / petals) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * r * ratio, Math.sin(a) * r * ratio,
+        r * ratio, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    /* Containing rings. */
+    ctx.strokeStyle = "rgba(138,109,42,.75)";
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.93, 0, Math.PI * 2); ctx.stroke();
+
+    /* Inner figure. */
+    ctx.strokeStyle = "rgba(244,229,182,.42)";
+    ctx.beginPath();
+    for (var k = 0; k <= sides; k++) {
+      var b = (k / sides) * Math.PI * 2 - Math.PI / 2;
+      var x = Math.cos(b) * r * 0.5;
+      var y = Math.sin(b) * r * 0.5;
+      if (k === 0) { ctx.moveTo(x, y); } else { ctx.lineTo(x, y); }
+    }
+    ctx.stroke();
+
+    /* Points of light on the outer ring. */
+    ctx.fillStyle = "rgba(244,229,182,.66)";
+    for (var d = 0; d < petals; d++) {
+      var c = (d / petals) * Math.PI * 2 + Math.PI / petals;
+      ctx.beginPath();
+      ctx.arc(Math.cos(c) * r * 0.96, Math.sin(c) * r * 0.96,
+        Math.max(0.9, s / 90), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* A dark disc so the monogram stays legible over the figure. */
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var veil = ctx.createRadialGradient(mid, mid, 0, mid, mid, r * 0.62);
+    veil.addColorStop(0, "rgba(8,11,24,.92)");
+    veil.addColorStop(1, "rgba(8,11,24,0)");
+    ctx.fillStyle = veil;
+    ctx.fillRect(0, 0, s, s);
+  }
+
+  function sigils() {
+    document.querySelectorAll("canvas[data-sigil]").forEach(sigil);
+  }
+
   /* ------------------------------------------------------------ entrance */
 
   function play(el, frames, options) {
@@ -132,15 +219,32 @@
     var title = root.querySelector("[data-focus]");
     var words = title ? title.querySelectorAll(".w") : [];
 
+    /* The light finds the man first, then his name. */
+    var portrait = root.querySelector(".hero .portrait, " +
+      ".hall-hero .portrait");
+    play(portrait, [
+      { opacity: 0, transform: "scale(.92)" },
+      { opacity: 1, transform: "scale(1)" }
+    ], { duration: 1300, easing: EASE });
+
+    var ring = portrait ? portrait.querySelector(".arc") : null;
+    if (ring && !reduce) {
+      var len = ring.getTotalLength();
+      ring.style.strokeDasharray = len;
+      ring.style.strokeDashoffset = len;
+      ring.animate([{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+        { duration: 1900, delay: 240, easing: EASE, fill: "forwards" });
+    }
+
     play(root.querySelector("[data-step='eyebrow']"), RISE,
-      { duration: 900, delay: 120, easing: EASE });
+      { duration: 900, delay: 420, easing: EASE });
 
     /* The name comes into focus one word at a time, as a lens would. */
     for (var i = 0; i < words.length; i++) {
       play(words[i], [
         { opacity: 0, filter: "blur(16px)", transform: "translateY(12px)" },
         { opacity: 1, filter: "blur(0px)", transform: "translateY(0)" }
-      ], { duration: 1400, delay: 300 + i * 210, easing: EASE });
+      ], { duration: 1400, delay: 640 + i * 210, easing: EASE });
     }
 
     if (title) {
@@ -148,7 +252,7 @@
         [{ backgroundPosition: "130% 0" }, { backgroundPosition: "-45% 0" }],
         {
           duration: 2600,
-          delay: 480 + words.length * 210,
+          delay: 820 + words.length * 210,
           easing: "cubic-bezier(.36,.05,.2,1)"
         });
     }
@@ -160,13 +264,13 @@
       path.style.strokeDashoffset = len;
       path.animate(
         [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
-        { duration: 1700, delay: 900, easing: "ease-in-out",
+        { duration: 1700, delay: 1240, easing: "ease-in-out",
           fill: "forwards" });
     }
 
     ["role", "cue"].forEach(function (step, n) {
       play(root.querySelector("[data-step='" + step + "']"), RISE,
-        { duration: 1100, delay: 1250 + n * 450, easing: EASE });
+        { duration: 1100, delay: 1590 + n * 450, easing: EASE });
     });
   }
 
@@ -224,6 +328,8 @@
   function init() {
     var canvas = document.querySelector(".beam");
     if (canvas) { beam(canvas); }
+    sigils();
+    window.addEventListener("resize", sigils);
     splitWords();
     entrance(document);
     reveals();

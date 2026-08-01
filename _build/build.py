@@ -19,6 +19,56 @@ ORDINALS = [
     "Thirteen", "Fourteen", "Fifteen", "Sixteen",
 ]
 
+PHOTO_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp", ".avif")
+
+
+def photo_for(slug):
+    """Return the web path of a man's photograph, or None if he has none.
+
+    Photographs are picked up simply by living in assets/photos as
+    <slug>.<ext>; nothing in profiles.json needs changing.
+    """
+    folder = ROOT / "assets" / "photos"
+    for ext in PHOTO_EXTENSIONS:
+        if (folder / (slug + ext)).exists():
+            return f"assets/photos/{slug}{ext}"
+    return None
+
+
+def portrait(man, depth, small=False):
+    """A photograph in a gold ring, or a rosette drawn from his name."""
+    up = "../" * depth
+    src = photo_for(man["slug"])
+    extra = " portrait--sm" if small else ""
+
+    if src:
+        inner = (f'<img src="{up}{src}" alt="{man["name"]}" '
+                 f'loading="lazy" decoding="async">')
+        mono = ""
+    else:
+        inner = (f'<canvas data-sigil="{man["name"]}" '
+                 f'aria-hidden="true"></canvas>')
+        mono = (f'<div class="portrait__mono" aria-hidden="true">'
+                f'{man["monogram"]}</div>')
+
+    return f"""<figure class="portrait{extra}">
+    <div class="portrait__disc">{inner}</div>
+    {mono}
+    <svg class="portrait__ring" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="48" vector-effect="non-scaling-stroke"
+              opacity=".35"></circle>
+      <circle class="arc" cx="50" cy="50" r="48"
+              vector-effect="non-scaling-stroke"></circle>
+    </svg>
+  </figure>"""
+
+
+def split_facet(facet):
+    """Separate a facet's leading emoji from its label."""
+    icon, _, label = facet.partition(" ")
+    return icon, label
+
+
 FLOURISH = (
     '<svg class="flourish" viewBox="0 0 460 26" aria-hidden="true">'
     '<path d="M0 13 H168 M292 13 H460 '
@@ -79,6 +129,7 @@ def profile_page(man, index, men):
 
     out.append(f"""
 <section class="hero">
+  {portrait(man, 1)}
   <p class="hero__eyebrow" data-step="eyebrow">Profile {ordinal}</p>
   <h1 class="hero__name" data-focus>{name}</h1>
   {FLOURISH}
@@ -106,7 +157,11 @@ def profile_page(man, index, men):
             paras.append(f"    <p{cls}>{text}</p>")
         facets = ""
         if man["facets"]:
-            items = "".join(f"<li>{f}</li>" for f in man["facets"])
+            items = ""
+            for facet in man["facets"]:
+                icon, label = split_facet(facet)
+                items += (f'<li><span class="ico">{icon}</span>'
+                          f'{label}</li>')
             facets = f'\n  <ul class="facets reveal">{items}</ul>'
         body = "\n".join(paras)
         out.append(f"""
@@ -182,15 +237,13 @@ def index_page(men):
         draft = " plaque--draft" if man.get("draft") else ""
         role = ("Profile in preparation" if man.get("draft")
                 else man["role"])
+        icons = "".join(split_facet(f)[0] for f in man["facets"])
         out.append(f"""    <article class="plaque{draft} reveal">
       <p class="plaque__no">Profile {ORDINALS[i]}</p>
-      <div class="plaque__monogram" aria-hidden="true">
-        <svg viewBox="0 0 76 76"><circle cx="38" cy="38" r="36"></circle>
-        <circle class="arc" cx="38" cy="38" r="36"></circle></svg>
-        {man['monogram']}
-      </div>
+      {portrait(man, 0, small=True)}
       <h2 class="plaque__name">{man['name']}</h2>
       <p class="plaque__role">{role}</p>
+      <p class="plaque__icons" aria-hidden="true">{icons}</p>
       <a class="plaque__link" href="{man['slug']}/"
          aria-label="Read the tribute to {man['name']}"></a>
     </article>""")
