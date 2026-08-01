@@ -147,10 +147,13 @@
       "slug": "raphael",
       "name": "Pastor Raphael",
       "monogram": "PR",
-      "role": "Profile in preparation",
-      "facets": [],
-      "draft": true,
-      "body": [],
+      "role": "Media Lead, Researcher &amp; Project Manager",
+      "facets": ["Data Science &amp; Research", "Self-Taught Media", "Man of All Trades", "Dependable Leader"],
+      "body": [
+        "The man we are celebrating now is a man of all trades. He is the carpenter, the plumber, and an electrician so assured that, frankly, electricity fears him. He is also a great leader &#8212; the kind of man you go to when something simply has to get done, and it gets done. There was the day a door locked itself with children still inside, and while every other instinct in the room was to break it down, he calmly opened it from the outside. If you know, you know: better call Pastor Raphael!",
+        "He is the media man of the house of God, going live, running the church's social media, and designing the posters many of us have admired without ever asking who made them &#8212; and every bit of it self-taught. Beyond the screens, he is deeply passionate about research, data science, and project management. He will finish your Rocket Science project faster than your lecturer can mark it, and somehow you will still score higher than Elon Musk. If there is research, data, or a project that needs doing, you already know who to reach.",
+        "Above all, he is a man with a great heart for service and a passionate love for God. And he may well be the finest praise and worshipper who never sings &#8212; so wholly given to it that the calling has become a family affair: his children are literally named Praise and Worship."
+      ],
       "call": "Ladies and gentlemen, let us warmly celebrate Pastor Raphael!"
     }
   ]
