@@ -293,6 +293,14 @@ button:focus-visible{
   color: var(--gold);
 }
 
+/* A word struck out for the joke: still readable, clearly crossed. */
+.struck{
+  color: var(--slate-dim);
+  text-decoration: line-through;
+  text-decoration-color: var(--gold);
+  text-decoration-thickness: 2px;
+}
+
 .facets{
   display: flex;
   flex-wrap: wrap;
